@@ -66,79 +66,24 @@
 
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import {tryLogin, tryRegister} from "@/script/auth/Authentication.js";
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 console.log('KAKAO_JS_KEY:', import.meta.env.VITE_KAKAO_JS_KEY);
 console.log('REDIRECT_URI:', import.meta.env.VITE_KAKAO_REDIRECT_URI);
 
-
 export default {
   setup() {
-    const isLoginVisible = ref(true) // should be changed to true
-    const email = ref('')
-    const password = ref('')
-    const registerEmail = ref('')
-    const registerPassword = ref('')
-    const confirmPassword = ref('')
-    const rememberMe = ref(false)
-    const acceptTerms = ref(false)
-    const isEmailFocused = ref(false)
-    const isPasswordFocused = ref(false)
-    const isRegisterEmailFocused = ref(false)
-    const isRegisterPasswordFocused = ref(false)
-    const isConfirmPasswordFocused = ref(false)
-    const cursorStyle = ref({ display: 'none', left: '0px', top: '0px', transform: 'scale(1)' })
-    const hours = ref('')
-    const minutes = ref('')
-    const ampm = ref('')
+    const isLoginVisible = ref(true);
+    const email = ref('');
+    const password = ref('');
     const router = useRouter();
-
-    const isLoginFormValid = computed(() => email.value && password.value)
-    const isRegisterFormValid = computed(() =>
-        registerEmail.value &&
-        registerPassword.value &&
-        confirmPassword.value &&
-        registerPassword.value === confirmPassword.value &&
-        acceptTerms.value
-    )
 
     const redirectToKakaoLogin = () => {
       const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${import.meta.env.VITE_KAKAO_JS_KEY}&redirect_uri=${import.meta.env.VITE_KAKAO_REDIRECT_URI}`;
-      console.log('Kakao Auth URL:', kakaoAuthUrl); // 디버깅용 로그
+      console.log('Kakao Auth URL:', kakaoAuthUrl);
       window.location.href = kakaoAuthUrl;
     };
-
-
-    const toggleCard = () => {
-      isLoginVisible.value = !isLoginVisible.value
-      setTimeout(() => {
-        document.getElementById('register').classList.toggle('register-swap')
-        document.getElementById('login').classList.toggle('login-swap')
-      }, 50)
-    }
-
-    const focusInput = (inputName) => {
-      switch(inputName) {
-        case 'email': isEmailFocused.value = true; break;
-        case 'password': isPasswordFocused.value = true; break;
-        case 'registerEmail': isRegisterEmailFocused.value = true; break;
-        case 'registerPassword': isRegisterPasswordFocused.value = true; break;
-        case 'confirmPassword': isConfirmPasswordFocused.value = true; break;
-      }
-    }
-
-    const blurInput = (inputName) => {
-      switch(inputName) {
-        case 'email': isEmailFocused.value = false; break;
-        case 'password': isPasswordFocused.value = false; break;
-        case 'registerEmail': isRegisterEmailFocused.value = false; break;
-        case 'registerPassword': isRegisterPasswordFocused.value = false; break;
-        case 'confirmPassword': isConfirmPasswordFocused.value = false; break;
-      }
-    }
-
 
     onMounted(async () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -161,23 +106,34 @@ export default {
           const data = await response.json();
           console.log('Access Token:', data.access_token);
 
-          // Access Token을 로컬 저장소에 저장
-          localStorage.setItem('accessToken', data.access_token);
+          if (!data.access_token) {
+            throw new Error('Failed to retrieve access token.');
+          }
 
-          // 저장된 Access Token 확인
+          // Access Token 저장
+          localStorage.setItem('accessToken', data.access_token);
           console.log('Stored Access Token:', localStorage.getItem('accessToken'));
 
-          // 사용자 정보를 가져옵니다
-          await fetchUserInfo(data.access_token);
+          // 사용자 정보 가져오기
+          const userInfo = await fetchUserInfo(data.access_token);
 
-          // 홈 페이지로 리디렉션
-          router.push('/');
+          if (userInfo) {
+            console.log('User Info:', userInfo);
+            localStorage.setItem(
+                'profileName',
+                userInfo.kakao_account.profile.nickname || 'Guest'
+            );
+            // 홈 페이지로 리디렉션
+            router.push({ name: 'Main' });
+          } else {
+            throw new Error('Failed to fetch user info.');
+          }
         } catch (error) {
-          console.error('Error fetching Kakao token:', error);
+          console.error('Login failed:', error);
+          alert('카카오 로그인에 실패했습니다. 다시 시도해주세요.');
         }
       }
     });
-
 
     const fetchUserInfo = async (accessToken) => {
       try {
@@ -185,62 +141,30 @@ export default {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
-        const userInfo = await response.json();
-        console.log('User Info:', userInfo); // 사용자 정보 디버깅 로그
-
-        // 프로필 이름을 저장
-        if (userInfo.kakao_account && userInfo.kakao_account.profile) {
-          const nickname = userInfo.kakao_account.profile.nickname;
-          localStorage.setItem('profileName', nickname); // 프로필 이름 저장
-        } else {
-          console.error('Profile information not found.');
+        if (!response.ok) {
+          throw new Error('Failed to fetch user info.');
         }
+
+        return await response.json();
       } catch (error) {
         console.error('Error fetching user info:', error);
+        return null;
       }
     };
 
-
-
-
     onUnmounted(() => {
-    })
-
-    const handleLogin = () => {
-      tryLogin(
-          email.value,
-          password.value,
-          () => {
-            router.push('/');
-          },
-          () => {
-            alert('Login failed');
-          }
-      )
-    }
-
-    const handleRegister = () => {
-      tryRegister(
-          registerEmail.value,
-          registerPassword.value,
-          () => {
-            toggleCard();
-          },
-          (err) => {
-            alert(err);
-          }
-      )
-    }
+      console.log('SignIn component unmounted');
+    });
 
     return {
-      isLoginVisible, email, password, registerEmail, registerPassword, confirmPassword,
-      rememberMe, acceptTerms, isEmailFocused, isPasswordFocused, isRegisterEmailFocused,
-      isRegisterPasswordFocused, isConfirmPasswordFocused, cursorStyle, hours, minutes, ampm,
-      isLoginFormValid, isRegisterFormValid, toggleCard, focusInput, blurInput,
-      handleLogin, handleRegister, redirectToKakaoLogin
-    }
-  }
-}
+      isLoginVisible,
+      email,
+      password,
+      redirectToKakaoLogin,
+    };
+  },
+};
+
 </script>
 
 

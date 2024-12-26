@@ -16,14 +16,20 @@
         </nav>
       </div>
       <div class="header-right">
-        <span v-if="profileName" class="profile-name">{{ profileName }}</span>
-        <button class="icon-button" @click="removeKey">
+        <span v-if="isAuthenticated && profileName !== 'Guest'" class="profile-name">{{ profileName }}</span>
+        <button class="icon-button" @click="toggleMenu">
           <font-awesome-icon :icon="['fas', 'user']" />
         </button>
+        <!-- 드롭다운 메뉴 -->
+        <div class="dropdown-menu" v-if="showMenu">
+          <button v-if="isAuthenticated && profileName !== 'Guest'" @click="logout">로그아웃</button>
+          <button v-else @click="login">로그인</button>
+        </div>
         <button class="icon-button mobile-menu-button" @click="toggleMobileMenu">
           <font-awesome-icon :icon="['fas', 'bars']" />
         </button>
       </div>
+
     </header>
 
     <!-- Mobile Navigation -->
@@ -45,46 +51,75 @@
 
 <script>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faSearch, faUser, faTicket, faBars, faTimes } from '@fortawesome/free-solid-svg-icons'
-import { library } from '@fortawesome/fontawesome-svg-core'
+import { faSearch, faUser, faTicket, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { library } from '@fortawesome/fontawesome-svg-core';
 
 library.add(faSearch, faUser, faTicket, faBars, faTimes);
 
 export default {
   name: 'MainHeader',
   components: {
-    FontAwesomeIcon
+    FontAwesomeIcon,
   },
   data() {
     return {
       isScrolled: false,
       isMobileMenuOpen: false,
-      profileName: '' // 사용자 이름 저장
-    }
+      showMenu: false, // 드롭다운 메뉴 표시 여부
+      profileName: '', // 사용자 이름 저장
+      isAuthenticated: false, // 로그인 상태
+    };
   },
   methods: {
-    removeKey() {
-      localStorage.removeItem('accessToken'); // Access Token 삭제
-      localStorage.removeItem('profileName'); // 프로필 이름 삭제
-      this.$router.push('/signin'); // 로그인 페이지로 이동
+    toggleMenu() {
+      this.showMenu = !this.showMenu; // 드롭다운 메뉴 토글
+    },
+    logout() {
+      console.log('Logging out...');
+      // 로컬 저장소 데이터 삭제
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('profileName');
+
+      // 상태 초기화
+      this.isAuthenticated = false;
+      this.profileName = 'Guest';
+      this.showMenu = false;
+
+      console.log('After logout - localStorage:', localStorage.getItem('accessToken'), localStorage.getItem('profileName'));
+      console.log('Redirecting to SignIn...');
+
+      // SignIn 페이지로 리디렉션
+      this.$router.push({ name: 'SignIn' }).catch(err => console.error('Routing error:', err));
+    },
+    login() {
+      console.log('Redirecting to SignIn...');
+      this.showMenu = false;
+      this.$router.push({ name: 'SignIn' }).catch(err => console.error('Routing error:', err));
     },
     toggleMobileMenu() {
       this.isMobileMenuOpen = !this.isMobileMenuOpen;
     },
     handleScroll() {
-      this.isScrolled = window.scrollY > 50;
-    }
+      this.isScrolled = window.scrollY > 50; // 스크롤 여부에 따라 헤더 스타일 변경
+    },
   },
+
+
   mounted() {
     window.addEventListener('scroll', this.handleScroll);
-    // localStorage에서 profileName 가져오기
-    this.profileName = localStorage.getItem('profileName') || 'Guest';
-    console.log(localStorage.getItem('profileName'));
 
+    const token = localStorage.getItem('accessToken');
+    const profileName = localStorage.getItem('profileName') || 'Guest';
+
+    this.isAuthenticated = !!token; // 토큰이 존재하면 로그인 상태
+    this.profileName = token ? profileName : 'Guest';
+
+    console.log('Mounted - isAuthenticated:', this.isAuthenticated);
+    console.log('Mounted - profileName:', this.profileName);
   },
   beforeUnmount() {
     window.removeEventListener('scroll', this.handleScroll);
-  }
+  },
 };
 </script>
 
@@ -234,5 +269,37 @@ export default {
     text-align: left;
     font-size: 1.15rem !important;
   }
+
+
 }
+
+.dropdown-menu {
+  position: absolute;
+  top: 50px;
+  right: 10px;
+  background-color: #141414;
+  border: 1px solid #333;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-menu button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-menu button:hover {
+  background-color: #333;
+}
+
+
+
 </style>

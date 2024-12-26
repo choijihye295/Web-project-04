@@ -39,7 +39,7 @@ const routes = [
 ]
 
 const router = createRouter({
-    history: createWebHashHistory('/24-02-WSD-Assignment-02-Demo/'),
+    history: createWebHashHistory('/24-02-WSD-Assignment-04'),
     routes
 })
 
@@ -63,26 +63,86 @@ const router = createRouter({
 //         }
 //     }
 // });
-router.beforeEach((to, _from, next): void => {
-    // Access Token을 기준으로 인증 상태 확인
-    const isAuthenticated = !!localStorage.getItem('accessToken'); // Access Token이 존재하면 true
+// router.beforeEach((to, _from, next): void => {
+//     // Access Token을 기준으로 인증 상태 확인
+//     const isAuthenticated = !!localStorage.getItem('accessToken'); // Access Token이 존재하면 true
+//
+//     if (to.matched.some(record => record.meta.requiresAuth)) {
+//         // 인증이 필요한 페이지에 접근 시
+//         if (!isAuthenticated) {
+//             next({ name: 'SignIn' }); // 인증되지 않은 경우 SignIn으로 리디렉션
+//         } else {
+//             next(); // 인증된 경우 요청한 페이지로 이동
+//         }
+//     } else {
+//         // 인증되지 않은 페이지에 접근 시
+//         if (to.name === 'SignIn' && isAuthenticated) {
+//             next({ name: 'Main' }); // 이미 인증된 사용자는 Main으로 리디렉션
+//         } else {
+//             next(); // 요청한 페이지로 이동
+//         }
+//     }
+// });
+
+// router.beforeEach((to, from, next) => {
+//     // Access Token을 동적으로 확인
+//     const isAuthenticated = !!localStorage.getItem('accessToken');
+//     console.log('Navigating to:', to.name);
+//     console.log('isAuthenticated:', isAuthenticated);
+//
+//     if (to.matched.some(record => record.meta.requiresAuth)) {
+//         if (!isAuthenticated) {
+//             console.log('Redirecting to SignIn...');
+//             next({ name: 'SignIn' });
+//         } else {
+//             console.log('Access granted to:', to.name);
+//             next();
+//         }
+//     } else if (to.name === 'SignIn') {
+//         if (isAuthenticated) {
+//             console.log('Already authenticated, redirecting to Main...');
+//             next({ name: 'Main' });
+//         } else {
+//             console.log('Access granted to SignIn');
+//             next();
+//         }
+//     } else {
+//         console.log('Access granted to:', to.name);
+//         next();
+//     }
+// });
+
+
+
+router.beforeEach((to, from, next) => {
+    const isAuthenticated = !!localStorage.getItem('accessToken'); // Access Token 존재 여부 확인
+    console.log('Navigating to:', to.name);
+    console.log('isAuthenticated:', isAuthenticated);
 
     if (to.matched.some(record => record.meta.requiresAuth)) {
-        // 인증이 필요한 페이지에 접근 시
         if (!isAuthenticated) {
-            next({ name: 'SignIn' }); // 인증되지 않은 경우 SignIn으로 리디렉션
+            console.log('Redirecting to SignIn...');
+            next({ name: 'SignIn' });
         } else {
-            next(); // 인증된 경우 요청한 페이지로 이동
+            console.log('Access granted to:', to.name);
+            next();
+        }
+    } else if (to.name === 'SignIn') {
+        if (isAuthenticated) {
+            console.log('Already authenticated, redirecting to Main...');
+            next({ name: 'Main' });
+        } else {
+            console.log('Access granted to SignIn');
+            next();
         }
     } else {
-        // 인증되지 않은 페이지에 접근 시
-        if (to.name === 'SignIn' && isAuthenticated) {
-            next({ name: 'Main' }); // 이미 인증된 사용자는 Main으로 리디렉션
-        } else {
-            next(); // 요청한 페이지로 이동
-        }
+        console.log('Access granted to:', to.name);
+        next();
     }
 });
+
+
+
 
 
 
