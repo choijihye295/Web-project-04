@@ -67,6 +67,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import {tryLogin, tryRegister} from "@/script/auth/Authentication.js";
 import { useRouter } from 'vue-router';
 
 console.log('KAKAO_JS_KEY:', import.meta.env.VITE_KAKAO_JS_KEY);
@@ -78,6 +79,21 @@ export default {
     const email = ref('');
     const password = ref('');
     const router = useRouter();
+
+    const registerEmail = ref('')
+    const registerPassword = ref('')
+    const confirmPassword = ref('')
+    const rememberMe = ref(false)
+    const acceptTerms = ref(false)
+    const isEmailFocused = ref(false)
+    const isPasswordFocused = ref(false)
+    const isRegisterEmailFocused = ref(false)
+    const isRegisterPasswordFocused = ref(false)
+    const isConfirmPasswordFocused = ref(false)
+    const cursorStyle = ref({ display: 'none', left: '0px', top: '0px', transform: 'scale(1)' })
+    const hours = ref('')
+    const minutes = ref('')
+    const ampm = ref('')
 
     const redirectToKakaoLogin = () => {
       const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${import.meta.env.VITE_KAKAO_JS_KEY}&redirect_uri=${import.meta.env.VITE_KAKAO_REDIRECT_URI}`;
@@ -156,11 +172,81 @@ export default {
       console.log('SignIn component unmounted');
     });
 
+    const isRegisterFormValid = computed(() =>
+        registerEmail.value &&
+        registerPassword.value &&
+        confirmPassword.value &&
+        registerPassword.value === confirmPassword.value &&
+        acceptTerms.value
+    )
+
+    const toggleCard = () => {
+      isLoginVisible.value = !isLoginVisible.value
+      setTimeout(() => {
+        document.getElementById('register').classList.toggle('register-swap')
+        document.getElementById('login').classList.toggle('login-swap')
+      }, 50)
+    }
+
+    const focusInput = (inputName) => {
+      switch(inputName) {
+        case 'email': isEmailFocused.value = true; break;
+        case 'password': isPasswordFocused.value = true; break;
+        case 'registerEmail': isRegisterEmailFocused.value = true; break;
+        case 'registerPassword': isRegisterPasswordFocused.value = true; break;
+        case 'confirmPassword': isConfirmPasswordFocused.value = true; break;
+      }
+    }
+
+    const blurInput = (inputName) => {
+      switch(inputName) {
+        case 'email': isEmailFocused.value = false; break;
+        case 'password': isPasswordFocused.value = false; break;
+        case 'registerEmail': isRegisterEmailFocused.value = false; break;
+        case 'registerPassword': isRegisterPasswordFocused.value = false; break;
+        case 'confirmPassword': isConfirmPasswordFocused.value = false; break;
+      }
+    }
+
+    const handleLogin = () => {
+      tryLogin(
+          email.value,
+          password.value,
+          () => {
+            router.push('/');
+          },
+          () => {
+            alert('Login failed');
+          }
+      )
+    }
+
+    const handleRegister = () => {
+      tryRegister(
+          registerEmail.value,
+          registerPassword.value,
+          () => {
+            toggleCard();
+          },
+          (err) => {
+            alert(err);
+          }
+      )
+    }
+
+
+
+
     return {
       isLoginVisible,
       email,
       password,
       redirectToKakaoLogin,
+      registerEmail, registerPassword, confirmPassword,
+      rememberMe, acceptTerms, isEmailFocused, isPasswordFocused, isRegisterEmailFocused,
+      isRegisterPasswordFocused, isConfirmPasswordFocused, cursorStyle, hours, minutes, ampm,
+      isRegisterFormValid, toggleCard, focusInput, blurInput,
+      handleLogin, handleRegister
     };
   },
 };
@@ -568,32 +654,82 @@ button:hover {
     z-index:1;
   }
 
-  .kakao-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #fee500;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 15px;
-    font-size: 16px;
-    font-weight: bold;
-    color: #3c1e1e;
-    cursor: pointer;
-    margin-top: 20px;
-    width: 100%;
-    transition: background-color 0.3s;
-  }
-
-  .kakao-btn:hover {
-    background-color: #ffd900;
-  }
-
-  .kakao-btn img {
-    height: 20px;
-    margin-right: 10px;
-  }
 
 }
+
+button.kakao-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fee500;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 15px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #3c1e1e;
+  cursor: pointer;
+  margin-top: 20px;
+  width: 100%; /* 버튼 너비를 전체로 설정 */
+  max-width: 300px; /* 버튼의 최대 너비를 설정 */
+  transition: background-color 0.3s;
+}
+
+button.kakao-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fee500;
+  border: none;
+  border-radius: 30px;
+  padding: 15px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #3c1e1e;
+  cursor: pointer;
+  margin-top: 20px; /* 버튼과 위 요소 간격 */
+  max-width: 400px; /* 최대 너비 */
+  width: 100%; /* 가로로 꽉 채움 */
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+button.kakao-btn img {
+  height: 20px;
+  margin-right: 10px; /* 아이콘과 텍스트 간격 */
+}
+
+button.kakao-btn:hover {
+  background-color: #ffd900;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 수평 중앙 정렬 */
+  justify-content: center; /* 수직 중앙 정렬 */
+  height: 100vh; /* 화면 전체 높이 사용 */
+}
+
+#content-wrapper {
+  width: 100%;
+  max-width: 400px; /* 최대 너비 제한 */
+  margin: 0 auto; /* 중앙 정렬 */
+  position: relative; /* 배경 카드 위치 설정을 위해 필요 */
+}
+
+
+#login.hidden {
+  top: calc(10svh + 90px); /* 배경 카드 위치를 조정 */
+  transform: translateY(20%); /* 살짝 아래로 이동 */
+}
+
+.card.hidden {
+  background-color: #2069ff;
+  box-shadow: 0px 20px 40px rgba(23, 83, 209, 0.8);
+  padding: 20px; /* 내부 여백 설정 */
+  transition: all 0.3s ease;
+}
+
 
 </style>
