@@ -25,6 +25,7 @@ import axios from 'axios';
 //import {useWishlist} from "@/script/movie/wishlist.ts";
 import { useWishlist } from "../../script/movie/wishlist.ts";
 
+
 interface Movie {
   id: number;
   title: string;
@@ -55,7 +56,8 @@ export default defineComponent({
       required: true,
       default: 100
 
-    }
+    },
+
   },
   setup(props) {
     const movies = ref<Movie[]>([]);

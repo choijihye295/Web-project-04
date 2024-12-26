@@ -12,7 +12,8 @@
     "jsx": "preserve",     // Vue의 JSX 지원 설정
     "esModuleInterop": true, // ES6 모듈 호환성 설정
     "skipLibCheck": true,  // 라이브러리 체크 건너뜀
-    "strict": true         // 엄격한 타입 검사 활성화
+    "strict": true,         // 엄격한 타입 검사 활성화
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx"],
   "references": [
