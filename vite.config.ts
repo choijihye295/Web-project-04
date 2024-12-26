@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [vue()],
-    base: '/24-02-WSD-Assignment-04', // GitHub Pages 배포용 base 경로 설정
+    base: '/', // GitHub Pages 배포용 base 경로 설정
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),

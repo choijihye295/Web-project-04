@@ -39,7 +39,7 @@ const routes = [
 ]
 
 const router = createRouter({
-    history: createWebHashHistory('/24-02-WSD-Assignment-04'),
+    history: createWebHashHistory('/'),
     routes
 })
 
@@ -114,7 +114,7 @@ const router = createRouter({
 
 
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
     const isAuthenticated = !!localStorage.getItem('accessToken'); // Access Token 존재 여부 확인
     console.log('Navigating to:', to.name);
     console.log('isAuthenticated:', isAuthenticated);
