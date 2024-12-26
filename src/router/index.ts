@@ -43,26 +43,47 @@ const router = createRouter({
     routes
 })
 
+// router.beforeEach((to, _from, next): void => {
+//     const isAuthenticated = localStorage.getItem('TMDb-Key') !== null;
+//
+//     if (to.matched.some(record => record.meta.requiresAuth)) {
+//         // If the route requires authentication and the user is not authenticated
+//         if (!isAuthenticated) {
+//             next({ name: 'SignIn' }); // Redirect to the SignIn page
+//         } else {
+//             next(); // Proceed to the requested route
+//         }
+//     } else {
+//         // If the user is already authenticated and tries to access the SignIn page
+//         if (to.name === 'SignIn' && isAuthenticated) {
+//             next({ name: '/' }); // Redirect to the home page
+//         }
+//         else {
+//             next(); // Proceed to the requested route
+//         }
+//     }
+// });
 router.beforeEach((to, _from, next): void => {
-    const isAuthenticated = localStorage.getItem('TMDb-Key') !== null;
+    // Access Token을 기준으로 인증 상태 확인
+    const isAuthenticated = !!localStorage.getItem('accessToken'); // Access Token이 존재하면 true
 
     if (to.matched.some(record => record.meta.requiresAuth)) {
-        // If the route requires authentication and the user is not authenticated
+        // 인증이 필요한 페이지에 접근 시
         if (!isAuthenticated) {
-            next({ name: 'SignIn' }); // Redirect to the SignIn page
+            next({ name: 'SignIn' }); // 인증되지 않은 경우 SignIn으로 리디렉션
         } else {
-            next(); // Proceed to the requested route
+            next(); // 인증된 경우 요청한 페이지로 이동
         }
     } else {
-        // If the user is already authenticated and tries to access the SignIn page
+        // 인증되지 않은 페이지에 접근 시
         if (to.name === 'SignIn' && isAuthenticated) {
-            next({ name: '/' }); // Redirect to the home page
-        }
-        else {
-            next(); // Proceed to the requested route
+            next({ name: 'Main' }); // 이미 인증된 사용자는 Main으로 리디렉션
+        } else {
+            next(); // 요청한 페이지로 이동
         }
     }
 });
+
 
 
 export default router

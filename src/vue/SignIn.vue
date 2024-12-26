@@ -25,6 +25,13 @@
             </span>
               <button :disabled="!isLoginFormValid">Login</button>
             </form>
+
+            <!-- 카카오 로그인 버튼 추가 -->
+            <button @click="redirectToKakaoLogin" class="kakao-btn">
+              <img src="https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png" alt="Kakao Login" />
+              Login with Kakao
+            </button>
+
             <a href="javascript:void(0)" class="account-check" @click="toggleCard">Already an account? <b>Sign in</b></a>
           </div>
 
@@ -57,10 +64,14 @@
   </div>
 </template>
 
+
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {tryLogin, tryRegister} from "@/script/auth/Authentication.js";
 import { useRouter } from 'vue-router'
+
+console.log('KAKAO_JS_KEY:', import.meta.env.VITE_KAKAO_JS_KEY);
+console.log('REDIRECT_URI:', import.meta.env.VITE_KAKAO_REDIRECT_URI);
 
 
 export default {
@@ -93,6 +104,13 @@ export default {
         acceptTerms.value
     )
 
+    const redirectToKakaoLogin = () => {
+      const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${import.meta.env.VITE_KAKAO_JS_KEY}&redirect_uri=${import.meta.env.VITE_KAKAO_REDIRECT_URI}`;
+      console.log('Kakao Auth URL:', kakaoAuthUrl); // 디버깅용 로그
+      window.location.href = kakaoAuthUrl;
+    };
+
+
     const toggleCard = () => {
       isLoginVisible.value = !isLoginVisible.value
       setTimeout(() => {
@@ -121,9 +139,58 @@ export default {
       }
     }
 
-    onMounted(() => {
 
-    })
+    onMounted(async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+
+      if (code) {
+        try {
+          // Access Token 요청
+          const response = await fetch('https://kauth.kakao.com/oauth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              grant_type: 'authorization_code',
+              client_id: import.meta.env.VITE_KAKAO_JS_KEY,
+              redirect_uri: import.meta.env.VITE_KAKAO_REDIRECT_URI,
+              code: code,
+            }),
+          });
+
+          const data = await response.json();
+          console.log('Access Token:', data.access_token);
+
+          // Access Token을 로컬 저장소에 저장
+          localStorage.setItem('accessToken', data.access_token);
+
+          // 저장된 Access Token 확인
+          console.log('Stored Access Token:', localStorage.getItem('accessToken'));
+
+
+          // 홈 페이지로 리디렉션
+          router.push('/');
+        } catch (error) {
+          console.error('Error fetching Kakao token:', error);
+        }
+      }
+    });
+
+
+    const fetchUserInfo = async (accessToken) => {
+      try {
+        const response = await fetch('https://kapi.kakao.com/v2/user/me', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const userInfo = await response.json();
+        console.log('User Info:', userInfo);
+        alert(`Welcome, ${userInfo.kakao_account.profile.nickname}`);
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+
+
 
     onUnmounted(() => {
     })
@@ -159,7 +226,7 @@ export default {
       rememberMe, acceptTerms, isEmailFocused, isPasswordFocused, isRegisterEmailFocused,
       isRegisterPasswordFocused, isConfirmPasswordFocused, cursorStyle, hours, minutes, ampm,
       isLoginFormValid, isRegisterFormValid, toggleCard, focusInput, blurInput,
-      handleLogin, handleRegister
+      handleLogin, handleRegister, redirectToKakaoLogin
     }
   }
 }
@@ -565,6 +632,33 @@ button:hover {
     top:calc(5svh + 90px) !important;
     z-index:1;
   }
+
+  .kakao-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fee500;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #3c1e1e;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100%;
+    transition: background-color 0.3s;
+  }
+
+  .kakao-btn:hover {
+    background-color: #ffd900;
+  }
+
+  .kakao-btn img {
+    height: 20px;
+    margin-right: 10px;
+  }
+
 }
 
 </style>
