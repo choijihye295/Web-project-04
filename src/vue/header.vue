@@ -16,6 +16,7 @@
         </nav>
       </div>
       <div class="header-right">
+        <span v-if="profileName" class="profile-name">{{ profileName }}</span>
         <button class="icon-button" @click="removeKey">
           <font-awesome-icon :icon="['fas', 'user']" />
         </button>
@@ -57,13 +58,15 @@ export default {
   data() {
     return {
       isScrolled: false,
-      isMobileMenuOpen: false
+      isMobileMenuOpen: false,
+      profileName: '' // 사용자 이름 저장
     }
   },
   methods: {
     removeKey() {
-      localStorage.removeItem('TMDb-Key');
-      this.$router.push('/signin');
+      localStorage.removeItem('accessToken'); // Access Token 삭제
+      localStorage.removeItem('profileName'); // 프로필 이름 삭제
+      this.$router.push('/signin'); // 로그인 페이지로 이동
     },
     toggleMobileMenu() {
       this.isMobileMenuOpen = !this.isMobileMenuOpen;
@@ -74,6 +77,10 @@ export default {
   },
   mounted() {
     window.addEventListener('scroll', this.handleScroll);
+    // localStorage에서 profileName 가져오기
+    this.profileName = localStorage.getItem('profileName') || 'Guest';
+    console.log(localStorage.getItem('profileName'));
+
   },
   beforeUnmount() {
     window.removeEventListener('scroll', this.handleScroll);
@@ -82,6 +89,11 @@ export default {
 </script>
 
 <style>
+.profile-name {
+  margin-right: 10px;
+  color: white;
+  font-size: 1rem;
+}
 
 .app-header {
   height: 40px;

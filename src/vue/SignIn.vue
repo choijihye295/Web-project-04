@@ -167,6 +167,8 @@ export default {
           // 저장된 Access Token 확인
           console.log('Stored Access Token:', localStorage.getItem('accessToken'));
 
+          // 사용자 정보를 가져옵니다
+          await fetchUserInfo(data.access_token);
 
           // 홈 페이지로 리디렉션
           router.push('/');
@@ -182,13 +184,22 @@ export default {
         const response = await fetch('https://kapi.kakao.com/v2/user/me', {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
+
         const userInfo = await response.json();
-        console.log('User Info:', userInfo);
-        alert(`Welcome, ${userInfo.kakao_account.profile.nickname}`);
+        console.log('User Info:', userInfo); // 사용자 정보 디버깅 로그
+
+        // 프로필 이름을 저장
+        if (userInfo.kakao_account && userInfo.kakao_account.profile) {
+          const nickname = userInfo.kakao_account.profile.nickname;
+          localStorage.setItem('profileName', nickname); // 프로필 이름 저장
+        } else {
+          console.error('Profile information not found.');
+        }
       } catch (error) {
         console.error('Error fetching user info:', error);
       }
     };
+
 
 
 
